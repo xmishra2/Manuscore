@@ -13,17 +13,13 @@ header {
   text-align: center;
 }
 
-header img {
-  display: block;
-  margin: 0 auto 0.5em;
-}
-
 h1 {
   margin: 0.2em 0;
 }
 
 h2 {
   color: #2c3e50;
+  margin-top: 0;
 }
 
 nav {
@@ -31,6 +27,7 @@ nav {
   justify-content: center;
   background-color: #3498db;
   padding: 0.5em;
+  position: relative;
 }
 
 nav button {
@@ -52,7 +49,7 @@ nav button.active {
 #logoutBtn {
   position: absolute;
   right: 1em;
-  top: 1em;
+  top: 0.5em;
   background: #e74c3c;
   color: white;
   border: none;
@@ -125,4 +122,45 @@ ul#recordList li {
 
 ul#recordList li:last-child {
   border-bottom: none;
+}
+
+/* New component styles */
+.citation-box {
+  background: white;
+  border-left: 4px solid #3498db;
+  padding: 1em;
+  margin: 1em auto;
+  max-width: 600px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.citation-actions {
+  margin-top: 0.5em;
+}
+
+.citation-actions button {
+  margin-right: 0.5em;
+}
+
+.question-item {
+  margin-bottom: 1em;
+}
+
+.question-item label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.3em;
+}
+
+#copyCitationBtn,
+#downloadBibtexBtn,
+#exportCsvBtn {
+  background-color: #3498db;
+}
+
+#copyCitationBtn:hover,
+#downloadBibtexBtn:hover,
+#exportCsvBtn:hover {
+  background-color: #2980b9;
 }
