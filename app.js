@@ -38,9 +38,6 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
   }
 
   try {
-  e.preventDefault();
-
-  try {
     const mode = document.getElementById("evalMode").value;
     const docType = document.getElementById("manuscriptType")?.value || "";
 
