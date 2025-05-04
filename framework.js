@@ -1,5 +1,6 @@
 // framework.js
 // Maps each checklist/framework to the set of question IDs to use
+
 const frameworkMapping = {
   CONSORT: ["q1", "q2", "q4", "q5", "q7", "q14", "q17", "q18"],
   PRISMA: ["q1", "q21", "q22", "q23", "q25", "q24"],
@@ -18,4 +19,5 @@ const frameworkMapping = {
   SEMANTIC: ["q10", "q32", "q36"]
 };
 
-export default frameworkMapping;
+// Make frameworkMapping available globally
+window.frameworkMapping = frameworkMapping;
