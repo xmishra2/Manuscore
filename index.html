@@ -1,149 +1,82 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Manuscore – Paper Evaluation Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manuscore</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>📝 Manuscore</h1>
-    <p>Multiframework Research Paper Evaluation</p>
-
-  <p style="font-size: 0.9em; color: #555;"><strong>Cite as:</strong> Mishra, P. K. & Trenz, O. (2025). Manuscore: A Multi-framework Research Paper Evaluation Tool. Faculty of Business and Economics, Mendel University in Brno.</p>
-
+    <h1>Manuscore</h1>
+    <nav id="mainNav" style="display: none;">
+      <button onclick="switchTab('home')">Home</button>
+      <button onclick="switchTab('evaluate')">Evaluate</button>
+      <button onclick="switchTab('records')">Records</button>
+      <button id="logoutBtn" onclick="logout()" style="display: none;">Logout</button>
+    </nav>
   </header>
-
-  <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
 
   <section id="loginSection">
     <h2>Login</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required /><br><br>
-      <input type="password" id="password" placeholder="Password" required autocomplete="current-password" /><br><br>
+    <form onsubmit="login(event)">
+      <input type="text" id="username" placeholder="Username" required autocomplete="username" />
+      <input type="password" id="password" placeholder="Password" required autocomplete="current-password" />
       <button type="submit">Login</button>
     </form>
   </section>
 
-  <nav id="mainNav" style="display:none;">
-    <button onclick="switchTab('home')" class="active">Home</button>
-    <button onclick="switchTab('evaluation')">Evaluation</button>
-    <button onclick="switchTab('records')">Records</button>
-    <button onclick="switchTab('export')">Export</button>
-  </nav>
-
   <section id="home" class="tab-content active">
     <h2>Welcome to Manuscore</h2>
-    <p><strong>Manuscore</strong> is a web-based tool for evaluating academic manuscripts using 15 internationally recognized frameworks.</p>
-    <h3>Features:</h3>
-    <ul>
-      <li>📄 Supports document types like Articles, Reviews, Case Reports, Guidelines, and more</li>
-      <li>🧠 Frameworks include PRISMA, CONSORT, CARE, GRADE, COPE, STROBE, and others</li>
-      <li>📝 Evaluations are saved locally in your browser</li>
-      <li>📤 Export all records as a CSV file</li>
-      <li>🔐 No account required — quick access for reviewers and editors</li>
-    </ul>
-    <h3>Developed by:</h3>
-    <p>Dr. Pawan Kumar Mishra & Dr. Oldřich Trenz<br>Faculty of Business and Economics, Mendel University in Brno</p>
+    <p>This tool helps evaluate research manuscripts using multiple frameworks.</p>
+    <div style="background:#fff; border-left:4px solid #3498db; padding:1em;">
+      <strong>Cite as:</strong> Mishra, P. K. & Trenz, O. (2025). <em>Manuscore: A Multi-framework Research Paper Evaluation Tool</em>. Faculty of Business and Economics, Mendel University in Brno.
+      <br />
+      <button onclick="copyCitation()">📋 Copy</button>
+      <button onclick="downloadBibtex()">⬇️ BibTeX</button>
+    </div>
+    <p>Developed by Dr. Pawan Kumar Mishra and Dr. Oldřich Trenz</p>
   </section>
 
-  <section id="evaluation" class="tab-content">
-    <h2>Evaluate a Paper</h2>
+  <section id="evaluate" class="tab-content">
+    <h2>Evaluate Manuscript</h2>
     <form id="evaluationForm">
-      <label>Paper Title:</label><br>
-      <input type="text" id="paperTitle" required /><br>
-
-      <label>DOI or Link:</label><br>
-      <input type="text" id="paperDOI" /><br>
-
-      <label>Notes:</label><br>
-      <textarea id="evaluatorNotes" rows="4" cols="50"></textarea><br>
-
-      <label>Evaluation Mode:</label><br>
-      <select id="evalMode" required onchange="toggleDocType(this.value)">
-        <option value="">-- Select Mode --</option>
-        <option value="auto">Auto (based on manuscript type)</option>
-        <option value="full">Comprehensive (all frameworks)</option>
-      </select><br><br>
-
-      <div id="docTypeSection" style="display:none;">
-        <label>Document Type:</label><br>
-        <select id="manuscriptType">
-          <option value="">-- Select Document Type --</option>
-          <option value="Article">Article</option>
-          <option value="Review">Review</option>
-          <option value="Case Report">Case Report</option>
-          <option value="Conference Paper">Conference Paper</option>
-          <option value="Editorial Material">Editorial Material</option>
-          <option value="Letter">Letter</option>
-          <option value="Short Survey">Short Survey</option>
-          <option value="Data Paper">Data Paper</option>
-          <option value="Book Review">Book Review</option>
-          <option value="Software Review">Software Review</option>
-          <option value="Guideline">Guideline</option>
-          <option value="Qualitative Study">Qualitative Study</option>
-          <option value="Meeting Abstract">Meeting Abstract</option>
-        </select><br><br>
-      </div>
-
+      <input id="paperTitle" type="text" placeholder="Paper Title" required />
+      <input id="paperDOI" type="text" placeholder="DOI or Link" />
+      <select id="evalMode">
+        <option value="auto">Auto (based on type)</option>
+        <option value="full">Full Frameworks</option>
+      </select>
+      <select id="manuscriptType">
+        <option value="">-- Select Document Type --</option>
+        <option>Article</option>
+        <option>Review</option>
+        <option>Conference Paper</option>
+        <option>Case Report</option>
+        <option>Qualitative Study</option>
+        <option>Editorial Material</option>
+        <option>Letter</option>
+        <option>Short Survey</option>
+        <option>Data Paper</option>
+        <option>Software Review</option>
+        <option>Book Review</option>
+        <option>Guideline</option>
+        <option>Meeting Abstract</option>
+      </select>
       <div id="questionContainer"></div>
+      <textarea id="evaluatorNotes" placeholder="Additional notes..."></textarea>
       <button type="submit">Save Evaluation</button>
     </form>
   </section>
 
   <section id="records" class="tab-content">
-    <h2>Saved Records</h2>
+    <h2>Saved Evaluations</h2>
     <ul id="recordList"></ul>
+    <button onclick="downloadAllCSV()">Export All to CSV</button>
   </section>
 
-  <section id="export" class="tab-content">
-    <h2>Export</h2>
-    <button onclick="downloadAllCSV()">Download CSV</button>
-  </section>
-  
-  <!-- Cite As Block (Global Footer) -->
-<div id="citeBox" style="background: #ffffff; border-top: 1px solid #ccc; margin-top: 3em; padding: 1em 2em; font-size: 0.9em; color: #333;">
-  <p><strong>Cite as:</strong> Mishra, P. K. & Trenz, O. (2025). <em>Manuscore: A Multi-framework Research Paper Evaluation Tool</em>. Faculty of Business and Economics, Mendel University in Brno.</p>
-  
-  <button onclick="copyCitation()">📋 Copy Citation</button>
-  <button onclick="downloadBibtex()">📄 Export BibTeX</button>
-</div>
-
-
-  <script>
-    const USERS = { evaluator: "manuscore", admin: "1234" };
-    document.getElementById("loginForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value.trim();
-      if (USERS[u] === p) {
-        localStorage.setItem("manuscoreUser", u);
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("mainNav").style.display = "flex";
-        document.getElementById("logoutBtn").style.display = "inline-block";
-        document.getElementById("home").classList.add("active");
-      } else {
-        alert("Invalid login.");
-      }
-    });
-
-    function logout() {
-      localStorage.removeItem("manuscoreUser");
-      location.reload();
-    }
-
-    function switchTab(id) {
-      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
-      document.querySelectorAll(".tab-content").forEach(sec => sec.classList.remove("active"));
-      document.querySelector("nav button[onclick*='" + id + "']").classList.add("active");
-      document.getElementById(id).classList.add("active");
-    }
-
-    function toggleDocType(mode) {
-      document.getElementById("docTypeSection").style.display = mode === "auto" ? "block" : "none";
-    }
-  </script>
-
+  <script src="framework.js"></script>
   <script src="questions.js"></script>
   <script src="app.js"></script>
 </body>
