@@ -95,7 +95,7 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
   const all = JSON.parse(localStorage.getItem("manuscoreRecords") || "[]");
   all.push(payload);
   localStorage.setItem("manuscoreRecords", JSON.stringify(all));
-  alert("Saved. Manuscript ID: " + payload.id);
+  alert("Saved. Manuscript ID: " + payload.id); document.getElementById('home').classList.add('active'); switchTab("home");
   updateRecordList();
 });
 
@@ -128,4 +128,29 @@ function downloadAllCSV() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+
+function deleteRecord(index) {
+  const all = JSON.parse(localStorage.getItem("manuscoreRecords") || "[]");
+  if (!confirm("Delete manuscript #" + (index + 1) + "?")) return;
+  all.splice(index, 1);
+  localStorage.setItem("manuscoreRecords", JSON.stringify(all));
+  updateRecordList();
+}
+
+function updateRecordList() {
+  const list = document.getElementById("recordList");
+  if (!list) return;
+  const data = JSON.parse(localStorage.getItem("manuscoreRecords") || "[]");
+  list.innerHTML = "";
+  data.forEach((rec, idx) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <strong>#${idx + 1}</strong>: ${rec.paperTitle} (${rec.documentType}) 
+      [${new Date(rec.timestamp).toLocaleDateString()}]
+      <button onclick="deleteRecord(${idx})" style="margin-left:10px;">Delete</button>
+    `;
+    list.appendChild(li);
+  });
 }
