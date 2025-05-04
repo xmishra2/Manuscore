@@ -108,7 +108,15 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
     alert("Saved. Manuscript ID: " + payload.id);
     updateRecordList();
     switchTab("records");
-// Restore UI state
+
+// Restore login UI state
+const logged = localStorage.getItem("manuscoreUser");
+if (logged) {
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("mainNav").style.display = "flex";
+  document.getElementById("logoutBtn").style.display = "inline-block";
+  document.getElementById("home").classList.add("active");
+}
 document.getElementById("loginSection").style.display = "none";
 document.getElementById("mainNav").style.display = "flex";
 document.getElementById("logoutBtn").style.display = "inline-block";
