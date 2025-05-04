@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manuscore – Paper Evaluation Tool</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    nav {
+      background-color: #3498db;
+      padding: 0.5em;
+      display: none;
+      justify-content: center;
+    }
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1em;
+      margin: 0 1em;
+      cursor: pointer;
+    }
+    nav button.active {
+      font-weight: bold;
+      border-bottom: 2px solid white;
+    }
+    section.tab-content {
+      display: none;
+    }
+    section.tab-content.active {
+      display: block;
+    }
+    #loginSection {
+      text-align: center;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="manuscore_logo.png" alt="Manuscore Logo" style="max-height: 80px;" />
+    <h1>📝 Manuscore</h1>
+    <p>Multiframework Research Paper Evaluation</p>
+  </header>
+
+  <!-- LOGIN SECTION -->
+  <section id="loginSection">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required /><br><br>
+      <input type="password" id="password" placeholder="Password" required autocomplete="current-password" /><br><br>
+      <button type="submit">Login</button>
+    </form>
+  </section>
+
+  <!-- MAIN NAVIGATION -->
+  <nav id="mainNav">
+    <button onclick="switchTab('home')" class="active">Home</button>
+    <button onclick="switchTab('evaluation')">Evaluation</button>
+    <button onclick="switchTab('records')">Records</button>
+    <button onclick="switchTab('export')">Export</button>
+    <button onclick="switchTab('about')">About</button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <section id="home" class="tab-content active">
+    <h2>Welcome to Manuscore</h2>
+    <p>Use this tool to evaluate academic papers using 15 research frameworks.</p>
+  </section>
+
+  <section id="evaluation" class="tab-content">
+    <h2>Evaluate a Paper</h2>
+    <form id="evaluationForm">
+      <label>Paper Title:</label><br>
+      <input type="text" id="paperTitle" required /><br><br>
+
+      <label>DOI or Link:</label><br>
+      <input type="text" id="paperDOI" /><br><br>
+
+      <label>Evaluator Notes:</label><br>
+      <textarea id="evaluatorNotes" rows="4" cols="50" placeholder="Optional comments..."></textarea><br><br>
+
+      <label>Evaluation Mode:</label><br>
+      <select id="evalMode" required onchange="toggleDocType(this.value)">
+        <option value="">-- Select Mode --</option>
+        <option value="auto">Auto-matched (by document type)</option>
+        <option value="full">Comprehensive (all frameworks)</option>
+      </select><br><br>
+
+      <div id="docTypeSection" style="display:none;">
+        <label>Document Type:</label><br>
+        <select id="manuscriptType">
+          <option value="">-- Select Document Type --</option>
+          <option value="Article">Article</option>
+          <option value="Review">Review</option>
+          <option value="Conference Paper">Conference Paper</option>
+          <option value="Case Report">Case Report</option>
+          <option value="Qualitative Study">Qualitative Study</option>
+          <option value="Editorial Material">Editorial Material</option>
+          <option value="Letter">Letter</option>
+          <option value="Short Survey">Short Survey</option>
+          <option value="Data Paper">Data Paper</option>
+          <option value="Software Review">Software Review</option>
+          <option value="Book Review">Book Review</option>
+          <option value="Guideline">Guideline / Policy Paper</option>
+          <option value="Meeting Abstract">Meeting Abstract</option>
+        </select><br><br>
+      </div>
+
+      <div id="questionContainer"></div><br>
+      <button type="submit">Save Evaluation</button>
+    </form>
+  </section>
+
+  <section id="records" class="tab-content">
+    <h2>Saved Records</h2>
+    <p>Manuscripts stored on your device:</p>
+    <ul id="recordList"></ul>
+  </section>
+
+  <section id="export" class="tab-content">
+    <h2>Export Evaluations</h2>
+    <p><button onclick="downloadAllCSV()">Download All Records as CSV</button></p>
+  </section>
+
+  <section id="about" class="tab-content">
+    <h2>About Manuscore</h2>
+    <p>Developed by Dr. Pawan Kumar Mishra and Dr. Oldřich Trenz at the Faculty of Business and Economics, Mendel University in Brno.</p>
+  </section>
+
+  <script>
+    const USERS = { "evaluator": "manuscore" };
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      if (USERS[u] === p) {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("mainNav").style.display = "flex";
+        document.querySelectorAll(".tab-content")[0].classList.add("active");
+      } else {
+        alert("Invalid login.");
+      }
+    });
+
+    function switchTab(id) {
+      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll("section.tab-content").forEach(sec => sec.classList.remove("active"));
+      document.querySelector("nav button[onclick*='" + id + "']").classList.add("active");
+      document.getElementById(id).classList.add("active");
+    }
+
+    function toggleDocType(mode) {
+      document.getElementById("docTypeSection").style.display = (mode === "auto") ? "block" : "none";
+    }
+  </script>
+
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
