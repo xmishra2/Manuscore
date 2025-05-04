@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -18,51 +19,55 @@
     </nav>
   </header>
 
-  <!-- LOGIN -->
-  <section id="loginSection" class="tab-content">
+  <!-- LOGIN (no tab-content class so it's always visible if not hidden explicitly) -->
+
+  <section id="loginSection">
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="text"    id="username" placeholder="Username" required autocomplete="username" />
+      <input type="text" id="username" placeholder="Username" required autocomplete="username" />
       <input type="password" id="password" placeholder="Password" required autocomplete="current-password" />
       <button type="submit">Login</button>
     </form>
   </section>
 
   <!-- HOME -->
-  <section id="home" class="tab-content">
+
+  <section id="home" class="tab-content active">
     <h2>Welcome to Manuscore</h2>
     <div class="overview">
       <h3>About Manuscore</h3>
       <p>Manuscore is a web-based application crafted to streamline the evaluation of research manuscripts by integrating multiple established reporting frameworks into one cohesive tool. Whether you’re conducting randomized controlled trials, systematic reviews, observational studies, or qualitative research, Manuscore adapts dynamically to your manuscript type and chosen frameworks.</p>
 
-      <h3>Rationale</h3>
-      <p>Reviewers and editors often juggle diverse checklists—CONSORT for trials, PRISMA for reviews, STROBE for observational studies, and more—which can lead to inconsistent assessments and additional cognitive load. Manuscore automates questionnaire generation, scoring, and record-keeping, promoting transparency, reproducibility, and efficiency in peer review.</p>
+```
+  <h3>Rationale</h3>
+  <p>Reviewers and editors often juggle diverse checklists—CONSORT for trials, PRISMA for reviews, STROBE for observational studies, and more—which can lead to inconsistent assessments and additional cognitive load. Manuscore automates questionnaire generation, scoring, and record-keeping, promoting transparency, reproducibility, and efficiency in peer review.</p>
 
-      <h3>Getting Started</h3>
-      <ol>
-        <li><strong>Login:</strong> Enter your credentials to access your evaluation dashboard.</li>
-        <li><strong>Evaluate:</strong> In the Evaluate tab, enter paper details, choose “Auto” (type-based frameworks) or “Full” (every framework), answer the generated questions, add notes, and save.</li>
-        <li><strong>Records:</strong> Review, edit, delete, or export past evaluations in the Records tab.</li>
-      </ol>
-    </div>
+  <h3>Getting Started</h3>
+  <ol>
+    <li><strong>Login:</strong> Enter your credentials to access your evaluation dashboard.</li>
+    <li><strong>Evaluate:</strong> In the Evaluate tab, enter paper details, choose “Auto” (type-based frameworks) or “Full” (every framework), answer the generated questions, add notes, and save.</li>
+    <li><strong>Records:</strong> Review, edit, delete, or export past evaluations in the Records tab.</li>
+  </ol>
+</div>
+<div class="citation-box">
+  <strong>Cite as:</strong>
+  Mishra, P. K. &amp; Trenz, O. (2025). <em>Manuscore: A Multi-framework Research Paper Evaluation Tool</em>. Faculty of Business and Economics, Mendel University in Brno.
+  <div class="citation-actions">
+    <button type="button" id="copyCitationBtn">📋 Copy</button>
+    <button type="button" id="downloadBibtexBtn">⬇️ BibTeX</button>
+  </div>
+</div>
+```
 
-    <div class="citation-box">
-      <strong>Cite as:</strong>
-      Mishra, P. K. &amp; Trenz, O. (2025). <em>Manuscore: A Multi-framework Research Paper Evaluation Tool</em>.
-      Faculty of Business and Economics, Mendel University in Brno.
-      <div class="citation-actions">
-        <button type="button" id="copyCitationBtn">📋 Copy</button>
-        <button type="button" id="downloadBibtexBtn">⬇️ BibTeX</button>
-      </div>
-    </div>
   </section>
 
   <!-- EVALUATE -->
+
   <section id="evaluate" class="tab-content">
     <h2>Evaluate Manuscript</h2>
     <form id="evaluationForm">
       <input id="paperTitle" type="text" placeholder="Paper Title" required />
-      <input id="paperDOI"   type="text" placeholder="DOI or Link" />
+      <input id="paperDOI" type="text" placeholder="DOI or Link" />
       <select id="evalMode">
         <option value="auto">Auto (based on type)</option>
         <option value="full">Full Frameworks</option>
@@ -90,24 +95,27 @@
   </section>
 
   <!-- RECORDS -->
+
   <section id="records" class="tab-content">
     <h2>Saved Evaluations</h2>
     <ul id="recordList"></ul>
     <button type="button" id="exportCsvBtn">Export All to CSV</button>
   </section>
 
-  <!-- HELP/MANUAL -->
+  <!-- MANUAL -->
+
   <section id="manual" class="tab-content">
     <h2>User Manual</h2>
     <div class="manual-content">
-      <h3>Introduction</h3>
-      <p>Manuscore is a versatile web application designed to streamline the peer-review process by integrating multiple reporting checklists (e.g., CONSORT, PRISMA, STROBE) into a unified evaluation tool...</p>
-      <!-- Paste full manual content here -->
+      <p>This section will contain the full academic user manual for Manuscore. You can paste or dynamically load the formatted documentation here.</p>
     </div>
   </section>
 
   <script src="framework.js"></script>
+
   <script src="questions.js"></script>
+
   <script src="app.js"></script>
+
 </body>
 </html>
