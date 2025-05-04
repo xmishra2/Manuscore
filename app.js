@@ -1,6 +1,6 @@
 
-// Framework definitions
-const frameworkMapping = {
+// frameworkMapping is now loaded from framework.js
+/* const frameworkMapping = {
   CONSORT: ["q1", "q2", "q4", "q5", "q7", "q14", "q17", "q18"],
   PRISMA: ["q1", "q21", "q22", "q23", "q25", "q24"],
   STROBE: ["q1", "q3", "q4", "q7", "q8", "q13"],
@@ -16,7 +16,7 @@ const frameworkMapping = {
   SCITE: ["q29", "q33"],
   ALTMETRICS: ["q31", "q40"],
   SEMANTIC: ["q10", "q32", "q36"]
-};
+}; */
 
 window.onload = function () {
   const logged = localStorage.getItem("manuscoreUser");
