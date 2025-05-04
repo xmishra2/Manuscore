@@ -1,135 +1,135 @@
-// Framework definitions
-const frameworkMapping = {
-  CONSORT: ["q1", "q2", "q4", "q5", "q7", "q14", "q17", "q18"],
-  PRISMA: ["q1", "q21", "q22", "q23", "q25", "q24"],
-  STROBE: ["q1", "q3", "q4", "q7", "q8", "q13"],
-  CARE: ["q1", "q5", "q28", "q14", "q17"],
-  SRQR: ["q1", "q26", "q27", "q14", "q30"],
-  SQUIRE: ["q1", "q2", "q30", "q17", "q40"],
-  GRADE: ["q8", "q17", "q24", "q25"],
-  CASP: ["q1", "q2", "q3", "q5", "q8", "q14", "q17"],
-  MMAT: ["q1", "q2", "q3", "q14", "q26"],
-  ROBIS: ["q23", "q24", "q25"],
-  EQUATOR: ["q1", "q2", "q6", "q18", "q34"],
-  COPE: ["q6", "q19", "q20", "q34", "q35"],
-  SCITE: ["q29", "q33"],
-  ALTMETRICS: ["q31", "q40"],
-  SEMANTIC: ["q10", "q32", "q36"]
-};
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manuscore – Paper Evaluation Tool</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>📝 Manuscore</h1>
+    <p>Multiframework Research Paper Evaluation</p>
+  </header>
 
-// Auto-login if user exists
-window.onload = function () {
-  const logged = localStorage.getItem("manuscoreUser");
-  if (logged) {
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("mainNav").style.display = "flex";
-    document.getElementById("home").classList.add("active");
-  }
-  updateRecordList();
-};
+  <!-- Logout Button -->
+  <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
 
-// Logout function
-function logout() {
-  localStorage.removeItem("manuscoreUser");
-  location.reload();
-}
+  <!-- Login -->
+  <section id="loginSection">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required /><br><br>
+      <input type="password" id="password" placeholder="Password" required autocomplete="current-password" /><br><br>
+      <button type="submit">Login</button>
+    </form>
+  </section>
 
-document.getElementById("evaluationForm").addEventListener("submit", function (e) {
-  e.preventDefault();
+  <!-- Navigation -->
+  <nav id="mainNav" style="display:none;">
+    <button onclick="switchTab('home')" class="active">Home</button>
+    <button onclick="switchTab('evaluation')">Evaluation</button>
+    <button onclick="switchTab('records')">Records</button>
+    <button onclick="switchTab('export')">Export</button>
+  </nav>
 
-  const mode = document.getElementById("evalMode").value;
-  const docType = document.getElementById("manuscriptType")?.value || "";
+  <!-- Tabs -->
+  <section id="home" class="tab-content active">
+    <h2>Welcome to Manuscore</h2>
+    <p>This tool helps evaluate academic manuscripts across 15 research frameworks.</p>
+  </section>
 
-  if (mode === "auto" && !docType) {
-    alert("Please select a document type.");
-    return;
-  }
+  <section id="evaluation" class="tab-content">
+    <h2>Evaluate a Paper</h2>
+    <form id="evaluationForm">
+      <label>Paper Title:</label><br>
+      <input type="text" id="paperTitle" required /><br>
 
-  const answers = {};
-  const selects = document.querySelectorAll("#questionContainer select");
-  selects.forEach(sel => {
-    const val = parseInt(sel.value);
-    if (!isNaN(val)) answers[sel.id] = val;
-  });
+      <label>DOI or Link:</label><br>
+      <input type="text" id="paperDOI" /><br>
 
-  let selectedFrameworks = [];
-  if (mode === "full") {
-    selectedFrameworks = Object.keys(frameworkMapping);
-  } else {
-    const docFrameworkMap = {
-      "Article": ["CASP", "STROBE", "EQUATOR"],
-      "Review": ["PRISMA", "ROBIS", "GRADE"],
-      "Conference Paper": ["MMAT", "CASP"],
-      "Case Report": ["CARE", "COPE"],
-      "Qualitative Study": ["SRQR", "CASP"],
-      "Editorial Material": ["COPE"],
-      "Letter": ["COPE", "EQUATOR"],
-      "Short Survey": ["SCITE", "ALTMETRICS"],
-      "Data Paper": ["SEMANTIC", "EQUATOR"],
-      "Software Review": ["SEMANTIC", "EQUATOR"],
-      "Book Review": ["SCITE", "ALTMETRICS"],
-      "Guideline": ["GRADE", "COPE"],
-      "Meeting Abstract": ["COPE"]
-    };
-    selectedFrameworks = docFrameworkMap[docType] || [];
-  }
+      <label>Notes:</label><br>
+      <textarea id="evaluatorNotes" rows="4" cols="50"></textarea><br>
 
-  const frameworkScores = {};
-  for (const fw of selectedFrameworks) {
-    const qids = frameworkMapping[fw];
-    const scores = qids.map(id => answers[id]).filter(v => !isNaN(v));
-    if (scores.length > 0) {
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      frameworkScores[fw] = Math.round(avg * 100) / 100;
+      <label>Evaluation Mode:</label><br>
+      <select id="evalMode" required onchange="toggleDocType(this.value)">
+        <option value="">-- Select Mode --</option>
+        <option value="auto">Auto (based on manuscript type)</option>
+        <option value="full">Comprehensive (all frameworks)</option>
+      </select><br><br>
+
+      <div id="docTypeSection" style="display:none;">
+        <label>Document Type:</label><br>
+        <select id="manuscriptType">
+          <option value="">-- Select Document Type --</option>
+          <option value="Article">Article</option>
+          <option value="Review">Review</option>
+          <option value="Case Report">Case Report</option>
+          <option value="Conference Paper">Conference Paper</option>
+          <option value="Editorial Material">Editorial Material</option>
+          <option value="Letter">Letter</option>
+          <option value="Short Survey">Short Survey</option>
+          <option value="Data Paper">Data Paper</option>
+          <option value="Book Review">Book Review</option>
+          <option value="Software Review">Software Review</option>
+          <option value="Guideline">Guideline</option>
+          <option value="Qualitative Study">Qualitative Study</option>
+          <option value="Meeting Abstract">Meeting Abstract</option>
+        </select><br><br>
+      </div>
+
+      <div id="questionContainer"></div>
+      <button type="submit">Save Evaluation</button>
+    </form>
+  </section>
+
+  <section id="records" class="tab-content">
+    <h2>Saved Records</h2>
+    <ul id="recordList"></ul>
+  </section>
+
+  <section id="export" class="tab-content">
+    <h2>Export</h2>
+    <button onclick="downloadAllCSV()">Download CSV</button>
+  </section>
+
+  <!-- Behavior -->
+  <script>
+    const USERS = { evaluator: "manuscore", admin: "1234" };
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      if (USERS[u] === p) {
+        localStorage.setItem("manuscoreUser", u);
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("mainNav").style.display = "flex";
+        document.getElementById("logoutBtn").style.display = "inline-block";
+        document.getElementById("home").classList.add("active");
+      } else {
+        alert("Invalid login.");
+      }
+    });
+
+    function logout() {
+      localStorage.removeItem("manuscoreUser");
+      location.reload();
     }
-  }
 
-  const payload = {
-    id: Date.now(),
-    paperTitle: document.getElementById("paperTitle").value.trim(),
-    doi: document.getElementById("paperDOI").value.trim(),
-    notes: document.getElementById("evaluatorNotes").value.trim(),
-    mode,
-    documentType: docType,
-    answers,
-    frameworkScores,
-    timestamp: new Date().toISOString()
-  };
+    function switchTab(id) {
+      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(sec => sec.classList.remove("active"));
+      document.querySelector("nav button[onclick*='" + id + "']").classList.add("active");
+      document.getElementById(id).classList.add("active");
+    }
 
-  const all = JSON.parse(localStorage.getItem("manuscoreRecords") || "[]");
-  all.push(payload);
-  localStorage.setItem("manuscoreRecords", JSON.stringify(all));
-  alert("Saved. Manuscript ID: " + payload.id);
-  updateRecordList();
-});
+    function toggleDocType(mode) {
+      document.getElementById("docTypeSection").style.display = mode === "auto" ? "block" : "none";
+    }
+  </script>
 
-function updateRecordList() {
-  const list = document.getElementById("recordList");
-  if (!list) return;
-  const data = JSON.parse(localStorage.getItem("manuscoreRecords") || "[]");
-  list.innerHTML = "";
-  data.forEach((rec, idx) => {
-    const li = document.createElement("li");
-    li.innerText = `#${idx + 1}: ${rec.paperTitle} (${rec.documentType}) [${new Date(rec.timestamp).toLocaleDateString()}]`;
-    list.appendChild(li);
-  });
-}
-
-function downloadAllCSV() {
-  const data = JSON.parse(localStorage.getItem("manuscoreRecords") || "[]");
-  if (data.length === 0) return alert("No records to export.");
-  const keys = Object.keys(data[0]);
-  const rows = [keys];
-  data.forEach(obj => {
-    rows.push(keys.map(k => typeof obj[k] === "object" ? JSON.stringify(obj[k]) : obj[k]));
-  });
-  const csv = rows.map(r => r.join(",")).join("\\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "manuscore_all_records.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
+  <!-- External JS -->
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
