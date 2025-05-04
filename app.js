@@ -32,6 +32,14 @@ window.onload = function () {
 document.getElementById("evaluationForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
+  if (!localStorage.getItem("manuscoreUser")) {
+    alert("Session expired. Please log in again.");
+    return;
+  }
+
+  try {
+  e.preventDefault();
+
   try {
     const mode = document.getElementById("evalMode").value;
     const docType = document.getElementById("manuscriptType")?.value || "";
@@ -42,7 +50,13 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
     }
 
     const answers = {};
-    document.querySelectorAll("#questionContainer select").forEach(sel => {
+    const selects = document.querySelectorAll("#questionContainer select");
+    if (selects.length === 0) {
+      alert("No evaluation questions available. Please check document type and mode.");
+      return;
+    }
+
+    selects.forEach(sel => {
       const val = parseInt(sel.value);
       if (!isNaN(val)) answers[sel.id] = val;
     });
@@ -97,6 +111,10 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
     alert("Saved. Manuscript ID: " + payload.id);
     updateRecordList();
     switchTab("records");
+// Restore UI state
+document.getElementById("loginSection").style.display = "none";
+document.getElementById("mainNav").style.display = "flex";
+document.getElementById("logoutBtn").style.display = "inline-block";
 
   } catch (err) {
     console.error("Submission error:", err);
