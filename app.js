@@ -1,7 +1,6 @@
 /* app.js – core logic for Manuscore */
 
-// Ensure questions[] and frameworkMapping are loaded
-// DOM refs
+// DOM references
 const loginSection         = document.getElementById("loginSection");
 const mainNav              = document.getElementById("mainNav");
 const logoutBtn            = document.getElementById("logoutBtn");
@@ -15,15 +14,14 @@ const recordList           = document.getElementById("recordList");
 const totalCountSpan       = document.getElementById("totalCount");
 const lastEvalDateSpan     = document.getElementById("lastEvalDate");
 
-// Build question lookup map
-const questionMap = {};
-if (typeof questions !== 'undefined') {
-  questions.forEach(q => { questionMap[q.id] = q.text; });
-} else {
-  console.error('questions[] is not defined');
-}
+// Track editing state
+let editingIndex = null;
 
-// Document type → frameworks mapping
+// Build question lookup
+const questionMap = {};
+questions.forEach(q => questionMap[q.id] = q.text);
+
+// Document Type → Frameworks mapping for Auto mode
 const docFrameworkMap = {
   "Article":           ["CASP","STROBE","EQUATOR"],
   "Review":            ["PRISMA","ROBIS","GRADE"],
@@ -40,7 +38,7 @@ const docFrameworkMap = {
   "Meeting Abstract":  ["COPE"]
 };
 
-// Show/hide login vs app UI
+// Show/hide UI
 function showApp() {
   loginSection.style.display = "none";
   mainNav.style.display     = "flex";
@@ -52,22 +50,28 @@ function hideApp() {
   logoutBtn.style.display   = "none";
 }
 
-// Update navbar active state
+// Update nav active state
 function updateNavActive(tabId) {
   document.querySelectorAll('#mainNav button[data-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabId);
   });
 }
 
-// Switch tabs, render questions on evaluate
+// Switch tabs and render Evaluate
 function switchTab(tabId) {
   tabs.forEach(sec => sec.classList.toggle('active', sec.id === tabId));
   updateNavActive(tabId);
-  if (tabId === 'evaluate') {
-    renderQuestions();
-  }
+  if (tabId === 'evaluate') renderQuestions();
+  if (tabId === 'home') clearEdit();
 }
 window.switchTab = switchTab;
+
+// Clear editing state
+function clearEdit() {
+  editingIndex = null;
+  evaluationForm.querySelector('button[type="submit"]').textContent = 'Save Evaluation';
+  evaluationForm.reset();
+}
 
 // Login handler
 loginForm.addEventListener('submit', e => {
@@ -78,9 +82,7 @@ loginForm.addEventListener('submit', e => {
     localStorage.setItem('manuscoreUser', u);
     showApp();
     switchTab('home');
-  } else {
-    alert('Please enter valid credentials.');
-  }
+  } else alert('Please enter valid credentials.');
 });
 
 // Logout handler
@@ -92,27 +94,24 @@ logoutBtn.addEventListener('click', () => {
   }
 });
 
-// On DOM ready
+// Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-  // Check login
   if (localStorage.getItem('manuscoreUser')) showApp();
   switchTab('home');
   updateRecordList();
 
-  // Nav button clicks
+  // Nav clicks
   document.querySelectorAll('#mainNav button[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  // Re-render evaluate if active
+  // Evaluate form listeners
   manuscriptTypeSelect.addEventListener('change', () => {
     if (document.getElementById('evaluate').classList.contains('active')) renderQuestions();
   });
   evalModeSelect.addEventListener('change', () => {
     if (document.getElementById('evaluate').classList.contains('active')) renderQuestions();
   });
-
-  // Form submit
   evaluationForm.addEventListener('submit', handleSubmit);
 
   // Utility buttons
@@ -121,39 +120,26 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('exportCsvBtn').addEventListener('click', downloadAllCSV);
 });
 
-// Render evaluation questions dynamically
+// Render questions based on mode/type
 function renderQuestions() {
-  if (typeof frameworkMapping === 'undefined') {
-    console.error('frameworkMapping not defined');
-    return;
-  }
-
   const mode = evalModeSelect.value;
   const type = manuscriptTypeSelect.value;
   let frameworks = [];
-
-  if (mode === 'full') {
-    frameworks = Object.keys(frameworkMapping);
-  } else if (mode === 'auto') {
+  if (mode === 'full') frameworks = Object.keys(frameworkMapping);
+  else if (mode === 'auto') {
     if (!type) {
-      questionContainer.innerHTML = '<p>Select document type first.</p>';
+      questionContainer.innerHTML = '<p>Please select a document type first.</p>';
       return;
     }
     frameworks = docFrameworkMap[type] || [];
   }
-
-  // Collect unique question IDs
-  const qids = Array.from(
-    new Set(frameworks.flatMap(fw => frameworkMapping[fw] || []))
-  );
+  const qids = [...new Set(frameworks.flatMap(fw => frameworkMapping[fw] || []))];
   if (!qids.length) {
     questionContainer.innerHTML = '<p>No questions available.</p>';
     return;
   }
-
-  // Populate
   questionContainer.innerHTML = qids.map(id => {
-    const text = questionMap[id] || '[Missing]';
+    const text = questionMap[id] || '[Missing question]';
     return `
       <div class="question-item">
         <label for="${id}">${text}</label>
@@ -168,24 +154,36 @@ function renderQuestions() {
       </div>
     `;
   }).join('');
+
+  // If editing, populate answers
+  if (editingIndex != null) {
+    const rec = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]')[editingIndex];
+    document.getElementById('paperTitle').value = rec.paperTitle;
+    document.getElementById('paperDOI').value = rec.doi;
+    document.getElementById('evaluatorNotes').value = rec.notes;
+    evalModeSelect.value = rec.mode;
+    manuscriptTypeSelect.value = rec.documentType;
+    qids.forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel && rec.answers[id] != null) sel.value = rec.answers[id];
+    });
+    evaluationForm.querySelector('button[type="submit"]').textContent = 'Update Evaluation';
+  }
 }
 
-// Handle evaluation submit
+// Handle form submit for save/update
 function handleSubmit(e) {
   e.preventDefault();
   if (!localStorage.getItem('manuscoreUser')) {
     alert('Session expired.');
     return;
   }
-
   const mode = evalModeSelect.value;
   const type = manuscriptTypeSelect.value;
   if (mode === 'auto' && !type) {
     alert('Select a document type.');
     return;
   }
-
-  // Gather answers
   const answers = {};
   questionContainer.querySelectorAll('select').forEach(sel => {
     const v = parseInt(sel.value, 10);
@@ -195,42 +193,39 @@ function handleSubmit(e) {
     alert('Answer at least one question.');
     return;
   }
-
-  // Compute framework scores
-  const selectedFws = mode === 'full'
-    ? Object.keys(frameworkMapping)
-    : (docFrameworkMap[type] || []);
+  const selected = mode === 'full' ? Object.keys(frameworkMapping) : (docFrameworkMap[type] || []);
   const frameworkScores = {};
-  selectedFws.forEach(fw => {
-    const vals = (frameworkMapping[fw] || []).
-      map(id => answers[id]).filter(v => v != null);
-    if (vals.length) {
-      const avg = vals.reduce((a,b) => a+b, 0) / vals.length;
-      frameworkScores[fw] = Math.round(avg*100)/100;
-    }
+  selected.forEach(fw => {
+    const vals = frameworkMapping[fw].map(id => answers[id]).filter(v => v != null);
+    if (vals.length) frameworkScores[fw] = Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*100)/100;
   });
-
-  // Build record
   const record = {
-    id: Date.now(),
+    id: editingIndex!=null ? JSON.parse(localStorage.getItem('manuscoreRecords'))[editingIndex].id : Date.now(),
     paperTitle: document.getElementById('paperTitle').value.trim(),
     doi: document.getElementById('paperDOI').value.trim(),
     notes: document.getElementById('evaluatorNotes').value.trim(),
-    mode,
-    documentType: type,
-    answers,
-    frameworkScores,
+    mode, documentType: type, answers, frameworkScores,
     timestamp: new Date().toISOString()
   };
-
-  // Save and update UI
   const all = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
-  all.push(record);
+  if (editingIndex != null) {
+    all[editingIndex] = record;
+    editingIndex = null;
+  } else {
+    all.push(record);
+  }
   localStorage.setItem('manuscoreRecords', JSON.stringify(all));
-  alert(`Saved. ID: ${record.id}`);
   updateRecordList();
   switchTab('records');
+  clearEdit();
 }
+
+// Edit an existing record
+function editRecord(idx) {
+  editingIndex = idx;
+  switchTab('evaluate');
+}
+window.editRecord = editRecord;
 
 // Update record list & overview
 function updateRecordList() {
@@ -240,12 +235,12 @@ function updateRecordList() {
   if (lastEvalDateSpan) lastEvalDateSpan.textContent = data.length
     ? new Date(data[data.length-1].timestamp).toLocaleDateString()
     : '–';
-
   // List
   recordList.innerHTML = data.length
     ? data.map((r,i) => `
         <li>
           <strong>#${i+1}</strong>: ${r.paperTitle} (${r.documentType}) <em>[${new Date(r.timestamp).toLocaleDateString()}]</em>
+          <button onclick="editRecord(${i})">Edit</button>
           <button onclick="deleteRecord(${i})">Delete</button>
         </li>
       `).join('')
@@ -262,25 +257,35 @@ function deleteRecord(idx) {
 }
 window.deleteRecord = deleteRecord;
 
-// Export CSV
+// Improved CSV export
 function downloadAllCSV() {
   const data = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
   if (!data.length) return alert('No records to export.');
-  const keys = Object.keys(data[0]);
-  const csv = [keys.join(','), ...data.map(o => keys.map(k => typeof o[k]==='object'?JSON.stringify(o[k]):o[k]).join(','))].join('\n');
+  const keys = ['id','paperTitle','doi','notes','mode','documentType','timestamp','answers','frameworkScores'];
+  const rows = [keys.join(',')];
+  data.forEach(obj => {
+    const row = keys.map(k => {
+      let v = obj[k];
+      if (typeof v === 'object') v = JSON.stringify(v);
+      v = `${v}`.replace(/"/g,'""');
+      return `"${v}"`;
+    });
+    rows.push(row.join(','));
+  });
+  const csv = rows.join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'manuscore_records.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-// Citation functions
+// Citation utils
 function copyCitation() {
-  const txt = "Mishra, P. K. & Trenz, O. (2025). Manuscore...";
+  const txt = "Mishra, P. K. & Trenz, O. (2025). Manuscore: A Multi-framework Research Paper Evaluation Tool. Faculty of Business and Economics, Mendel University in Brno.";
   navigator.clipboard.writeText(txt).then(()=>alert('Copied!'));
 }
 function downloadBibtex() {
   const bib = `@misc{manuscore2025,...}`;
-  const blob = new Blob([bib], {type:'text/plain'});
+  const blob=new Blob([bib],{type:'text/plain'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='manuscore.bib'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
