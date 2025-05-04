@@ -185,3 +185,36 @@ ul#recordList li:last-child {
 .overview p {
   line-height: 1.5;
 }
+
+.accordion {
+  max-width: 800px;
+  margin: auto;
+}
+
+.accordion-toggle {
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  padding: 1em;
+  width: 100%;
+  text-align: left;
+  border: none;
+  outline: none;
+  font-size: 1em;
+  transition: background 0.3s ease;
+  border-bottom: 1px solid #eee;
+}
+
+.accordion-toggle:hover {
+  background-color: #2980b9;
+}
+
+.accordion-panel {
+  padding: 0 1em;
+  display: none;
+  background-color: #f9f9f9;
+  overflow: hidden;
+  border-left: 2px solid #3498db;
+  border-right: 2px solid #3498db;
+  border-bottom: 1px solid #ddd;
+}
