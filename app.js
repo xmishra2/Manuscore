@@ -1,5 +1,6 @@
 /* app.js – core logic for Manuscore */
 
+// Ensure questions[] and frameworkMapping are loaded
 // DOM refs
 const loginSection         = document.getElementById("loginSection");
 const mainNav              = document.getElementById("mainNav");
@@ -16,9 +17,13 @@ const lastEvalDateSpan     = document.getElementById("lastEvalDate");
 
 // Build question lookup map
 const questionMap = {};
-questions.forEach(q => { questionMap[q.id] = q.text; });
+if (typeof questions !== 'undefined') {
+  questions.forEach(q => { questionMap[q.id] = q.text; });
+} else {
+  console.error('questions[] is not defined');
+}
 
-// Document type → frameworks mapping (for auto mode)
+// Document type → frameworks mapping
 const docFrameworkMap = {
   "Article":           ["CASP","STROBE","EQUATOR"],
   "Review":            ["PRISMA","ROBIS","GRADE"],
@@ -35,7 +40,7 @@ const docFrameworkMap = {
   "Meeting Abstract":  ["COPE"]
 };
 
-// Show/hide app vs login
+// Show/hide login vs app UI
 function showApp() {
   loginSection.style.display = "none";
   mainNav.style.display     = "flex";
@@ -47,21 +52,19 @@ function hideApp() {
   logoutBtn.style.display   = "none";
 }
 
-// Update navbar active button
+// Update navbar active state
 function updateNavActive(tabId) {
   document.querySelectorAll('#mainNav button[data-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabId);
   });
 }
 
-// Switch tab and render if needed
+// Switch tabs, render questions on evaluate
 function switchTab(tabId) {
   tabs.forEach(sec => sec.classList.toggle('active', sec.id === tabId));
   updateNavActive(tabId);
   if (tabId === 'evaluate') {
     renderQuestions();
-  } else {
-    questionContainer.innerHTML = '';
   }
 }
 window.switchTab = switchTab;
@@ -82,59 +85,75 @@ loginForm.addEventListener('submit', e => {
 
 // Logout handler
 logoutBtn.addEventListener('click', () => {
-  if (confirm('Are you sure you want to log out?')) {
+  if (confirm('Log out?')) {
     localStorage.removeItem('manuscoreUser');
     hideApp();
     switchTab(null);
   }
 });
 
-// On load, set initial UI
+// On DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('manuscoreUser')) {
-    showApp();
-  }
+  // Check login
+  if (localStorage.getItem('manuscoreUser')) showApp();
   switchTab('home');
   updateRecordList();
-  // Nav buttons
+
+  // Nav button clicks
   document.querySelectorAll('#mainNav button[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
-  // Hook up evaluation UI
+
+  // Re-render evaluate if active
   manuscriptTypeSelect.addEventListener('change', () => {
     if (document.getElementById('evaluate').classList.contains('active')) renderQuestions();
   });
   evalModeSelect.addEventListener('change', () => {
     if (document.getElementById('evaluate').classList.contains('active')) renderQuestions();
   });
+
+  // Form submit
   evaluationForm.addEventListener('submit', handleSubmit);
-  // Utilities
+
+  // Utility buttons
   document.getElementById('copyCitationBtn').addEventListener('click', copyCitation);
   document.getElementById('downloadBibtexBtn').addEventListener('click', downloadBibtex);
   document.getElementById('exportCsvBtn').addEventListener('click', downloadAllCSV);
 });
 
-// Render evaluation questions
+// Render evaluation questions dynamically
 function renderQuestions() {
+  if (typeof frameworkMapping === 'undefined') {
+    console.error('frameworkMapping not defined');
+    return;
+  }
+
   const mode = evalModeSelect.value;
   const type = manuscriptTypeSelect.value;
   let frameworks = [];
+
   if (mode === 'full') {
     frameworks = Object.keys(frameworkMapping);
   } else if (mode === 'auto') {
     if (!type) {
-      questionContainer.innerHTML = '<p>Please select a document type first.</p>';
+      questionContainer.innerHTML = '<p>Select document type first.</p>';
       return;
     }
     frameworks = docFrameworkMap[type] || [];
   }
-  const qids = [...new Set(frameworks.flatMap(fw => frameworkMapping[fw] || []))];
+
+  // Collect unique question IDs
+  const qids = Array.from(
+    new Set(frameworks.flatMap(fw => frameworkMapping[fw] || []))
+  );
   if (!qids.length) {
-    questionContainer.innerHTML = '<p>No questions available for the selected criteria.</p>';
+    questionContainer.innerHTML = '<p>No questions available.</p>';
     return;
   }
+
+  // Populate
   questionContainer.innerHTML = qids.map(id => {
-    const text = questionMap[id] || '[Missing question text]';
+    const text = questionMap[id] || '[Missing]';
     return `
       <div class="question-item">
         <label for="${id}">${text}</label>
@@ -151,49 +170,64 @@ function renderQuestions() {
   }).join('');
 }
 
-// Handle form submission
+// Handle evaluation submit
 function handleSubmit(e) {
   e.preventDefault();
   if (!localStorage.getItem('manuscoreUser')) {
-    alert('Session expired. Please log in again.');
+    alert('Session expired.');
     return;
   }
+
   const mode = evalModeSelect.value;
   const type = manuscriptTypeSelect.value;
   if (mode === 'auto' && !type) {
-    alert('Please select a document type.');
+    alert('Select a document type.');
     return;
   }
+
+  // Gather answers
   const answers = {};
   questionContainer.querySelectorAll('select').forEach(sel => {
     const v = parseInt(sel.value, 10);
     if (!isNaN(v)) answers[sel.id] = v;
   });
   if (!Object.keys(answers).length) {
-    alert('Please answer at least one question.');
+    alert('Answer at least one question.');
     return;
   }
-  const selected = mode === 'full' ? Object.keys(frameworkMapping) : (docFrameworkMap[type] || []);
+
+  // Compute framework scores
+  const selectedFws = mode === 'full'
+    ? Object.keys(frameworkMapping)
+    : (docFrameworkMap[type] || []);
   const frameworkScores = {};
-  selected.forEach(fw => {
-    const vals = (frameworkMapping[fw] || []).map(id => answers[id]).filter(v => v != null);
+  selectedFws.forEach(fw => {
+    const vals = (frameworkMapping[fw] || []).
+      map(id => answers[id]).filter(v => v != null);
     if (vals.length) {
-      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-      frameworkScores[fw] = Math.round(avg * 100) / 100;
+      const avg = vals.reduce((a,b) => a+b, 0) / vals.length;
+      frameworkScores[fw] = Math.round(avg*100)/100;
     }
   });
+
+  // Build record
   const record = {
     id: Date.now(),
     paperTitle: document.getElementById('paperTitle').value.trim(),
     doi: document.getElementById('paperDOI').value.trim(),
     notes: document.getElementById('evaluatorNotes').value.trim(),
-    mode, documentType: type, answers, frameworkScores,
+    mode,
+    documentType: type,
+    answers,
+    frameworkScores,
     timestamp: new Date().toISOString()
   };
+
+  // Save and update UI
   const all = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
   all.push(record);
   localStorage.setItem('manuscoreRecords', JSON.stringify(all));
-  alert(`Saved. Manuscript ID: ${record.id}`);
+  alert(`Saved. ID: ${record.id}`);
   updateRecordList();
   switchTab('records');
 }
@@ -203,15 +237,16 @@ function updateRecordList() {
   const data = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
   // Overview
   if (totalCountSpan) totalCountSpan.textContent = data.length;
-  if (lastEvalDateSpan) lastEvalDateSpan.textContent = data.length 
-    ? new Date(data[data.length - 1].timestamp).toLocaleDateString()
+  if (lastEvalDateSpan) lastEvalDateSpan.textContent = data.length
+    ? new Date(data[data.length-1].timestamp).toLocaleDateString()
     : '–';
+
   // List
   recordList.innerHTML = data.length
-    ? data.map((r, i) => `
+    ? data.map((r,i) => `
         <li>
           <strong>#${i+1}</strong>: ${r.paperTitle} (${r.documentType}) <em>[${new Date(r.timestamp).toLocaleDateString()}]</em>
-          <button onclick=\"deleteRecord(${i})\">Delete</button>
+          <button onclick="deleteRecord(${i})">Delete</button>
         </li>
       `).join('')
     : '<li>No records found.</li>';
@@ -220,8 +255,8 @@ function updateRecordList() {
 // Delete record
 function deleteRecord(idx) {
   const all = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
-  if (!confirm(`Delete manuscript #${idx+1}?`)) return;
-  all.splice(idx, 1);
+  if (!confirm(`Delete record #${idx+1}?`)) return;
+  all.splice(idx,1);
   localStorage.setItem('manuscoreRecords', JSON.stringify(all));
   updateRecordList();
 }
@@ -232,22 +267,20 @@ function downloadAllCSV() {
   const data = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
   if (!data.length) return alert('No records to export.');
   const keys = Object.keys(data[0]);
-  const csv = [keys.join(','), ...data.map(o => keys.map(k => typeof o[k] === 'object' ? JSON.stringify(o[k]) : o[k]).join(','))].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  const csv = [keys.join(','), ...data.map(o => keys.map(k => typeof o[k]==='object'?JSON.stringify(o[k]):o[k]).join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download = 'manuscore_records.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-// Citation utilities
+// Citation functions
 function copyCitation() {
-  const text = "Mishra, P. K. & Trenz, O. (2025). Manuscore: A Multi-framework Research Paper Evaluation Tool. Faculty of Business and Economics, Mendel University in Brno.";
-  navigator.clipboard.writeText(text).then(() => alert('Citation copied!'));
+  const txt = "Mishra, P. K. & Trenz, O. (2025). Manuscore...";
+  navigator.clipboard.writeText(txt).then(()=>alert('Copied!'));
 }
-
-// BibTeX download
 function downloadBibtex() {
-  const bib = `@misc{manuscore2025,\n  author = {Mishra, Pawan Kumar and Trenz, Oldřich},\n  title = {Manuscore: A Multi-framework Research Paper Evaluation Tool},\n  year = {2025},\n  institution = {Faculty of Business and Economics, Mendel University in Brno},\n  note = {Available at https://manuscore.netlify.app}\n}`;
-  const blob = new Blob([bib], { type: 'text/plain' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'manuscore.bib'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  const bib = `@misc{manuscore2025,...}`;
+  const blob = new Blob([bib], {type:'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='manuscore.bib'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
