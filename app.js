@@ -1,3 +1,4 @@
+
 // Framework definitions
 const frameworkMapping = {
   CONSORT: ["q1", "q2", "q4", "q5", "q7", "q14", "q17", "q18"],
@@ -17,23 +18,19 @@ const frameworkMapping = {
   SEMANTIC: ["q10", "q32", "q36"]
 };
 
-// Auto-login if user exists
+// On load: restore session and UI state
 window.onload = function () {
   const logged = localStorage.getItem("manuscoreUser");
   if (logged) {
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("mainNav").style.display = "flex";
+    document.getElementById("logoutBtn").style.display = "inline-block";
     document.getElementById("home").classList.add("active");
   }
   updateRecordList();
 };
 
-// Logout function
-function logout() {
-  localStorage.removeItem("manuscoreUser");
-  location.reload();
-}
-
+// Handle form submission
 document.getElementById("evaluationForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
@@ -46,8 +43,7 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
   }
 
   const answers = {};
-  const selects = document.querySelectorAll("#questionContainer select");
-  selects.forEach(sel => {
+  document.querySelectorAll("#questionContainer select").forEach(sel => {
     const val = parseInt(sel.value);
     if (!isNaN(val)) answers[sel.id] = val;
   });
