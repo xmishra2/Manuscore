@@ -123,7 +123,7 @@ function downloadAllCSV() {
   data.forEach(obj => {
     rows.push(keys.map(k => typeof obj[k] === "object" ? JSON.stringify(obj[k]) : obj[k]));
   });
-  const csv = rows.map(r => r.join(",")).join("\\n");
+  const csv = rows.map(r => r.join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
