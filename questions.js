@@ -1,4 +1,6 @@
-// Define questions
+// questions.js - defines evaluation questions and mapping to frameworks
+
+// Array of all possible evaluation questions
 const questions = [
   { id: "q1", text: "Are the research objectives clearly stated?" },
   { id: "q2", text: "Is the study design appropriate for the objectives?" },
@@ -42,6 +44,7 @@ const questions = [
   { id: "q40", text: "Is the paper suitable for informing policy/practice?" }
 ];
 
+// Mapping of frameworks to relevant question IDs
 const frameworkMapping = {
   CONSORT: ["q1", "q2", "q4", "q5", "q7", "q14", "q17", "q18"],
   PRISMA: ["q1", "q21", "q22", "q23", "q25", "q24"],
@@ -60,19 +63,19 @@ const frameworkMapping = {
   SEMANTIC: ["q10", "q32", "q36"]
 };
 
+// Function to render questions based on selected mode/type
 function renderQuestions() {
   const container = document.getElementById("questionContainer");
   container.innerHTML = "";
+  const mode = document.getElementById("evalMode").value;
+  const docType = document.getElementById("manuscriptType").value;
 
-  const mode = document.getElementById("evalMode")?.value || "full";
-  const docType = document.getElementById("manuscriptType")?.value;
-
+  // Determine frameworks to include
   let selectedFrameworks = [];
-
   if (mode === "full") {
     selectedFrameworks = Object.keys(frameworkMapping);
-  } else if (mode === "auto") {
-    const docFrameworkMap = {
+  } else { // auto mode
+    const docMap = {
       "Article": ["CASP", "STROBE", "EQUATOR"],
       "Review": ["PRISMA", "ROBIS", "GRADE"],
       "Conference Paper": ["MMAT", "CASP"],
@@ -87,29 +90,33 @@ function renderQuestions() {
       "Guideline": ["GRADE", "COPE"],
       "Meeting Abstract": ["COPE"]
     };
-    selectedFrameworks = docFrameworkMap[docType] || [];
+    selectedFrameworks = docMap[docType] || [];
   }
 
-  const selectedQIDs = [...new Set(selectedFrameworks.flatMap(fw => frameworkMapping[fw]))];
-  const selectedQuestions = questions.filter(q => selectedQIDs.includes(q.id));
+  // Aggregate unique questions
+  const qIDs = [...new Set(selectedFrameworks.flatMap(fw => frameworkMapping[fw]))];
+  const toRender = questions.filter(q => qIDs.includes(q.id));
 
-  selectedQuestions.forEach(q => {
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = `
-      <label for="${q.id}">${q.id.toUpperCase()}: ${q.text}</label><br>
-      <select id="${q.id}" name="${q.id}">
+  // Create dropdowns for each question
+  toRender.forEach(q => {
+    const div = document.createElement("div");
+    div.className = "question-item";
+    div.innerHTML = `
+      <label for="${q.id}">${q.id.toUpperCase()}: ${q.text}</label>
+      <select id="${q.id}" name="${q.id}" required>
+        <option value="">– Select –</option>
         <option value="1">1 - Poor</option>
         <option value="2">2</option>
         <option value="3">3 - Average</option>
         <option value="4">4</option>
         <option value="5">5 - Excellent</option>
-      </select><br><br>
+      </select>
     `;
-    container.appendChild(wrapper);
+    container.appendChild(div);
   });
 }
 
-// Re-render when document type changes in auto mode
+// Attach change listeners
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("manuscriptType").addEventListener("change", renderQuestions);
   document.getElementById("evalMode").addEventListener("change", renderQuestions);
