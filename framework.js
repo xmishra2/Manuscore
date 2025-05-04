@@ -1,4 +1,5 @@
-// framework.js
+// framework.js – Maps frameworks to evaluation question IDs
+
 const frameworkMapping = {
   CONSORT: ["q1", "q2", "q4", "q5", "q7", "q14", "q17", "q18"],
   PRISMA: ["q1", "q21", "q22", "q23", "q25", "q24"],
@@ -17,30 +18,8 @@ const frameworkMapping = {
   SEMANTIC: ["q10", "q32", "q36"]
 };
 
-function getFrameworks() {
-  return Object.keys(frameworkMapping);
-}
-
-function getQuestionsForFramework(fw) {
-  return frameworkMapping[fw] || [];
-}
-
-function getQuestionsForFrameworks(fwList) {
-  const all = new Set();
-  fwList.forEach(fw => {
-    (frameworkMapping[fw] || []).forEach(q => all.add(q));
-  });
-  return Array.from(all);
-}
-
-// Make available globally
-window.frameworkMapping = frameworkMapping;
-window.getFrameworks = getFrameworks;
-window.getQuestionsForFramework = getQuestionsForFramework;
-window.getQuestionsForFrameworks = getQuestionsForFrameworks;
-
-// Optional: Document type mapping (if not already in app.js)
-window.docFrameworkMap = {
+// Optional map for auto-mode based on document type
+const docFrameworkMap = {
   "Article": ["CASP", "STROBE", "EQUATOR"],
   "Review": ["PRISMA", "ROBIS", "GRADE"],
   "Conference Paper": ["MMAT", "CASP"],
@@ -55,3 +34,27 @@ window.docFrameworkMap = {
   "Guideline": ["GRADE", "COPE"],
   "Meeting Abstract": ["COPE"]
 };
+
+// Utility functions
+function getFrameworks() {
+  return Object.keys(frameworkMapping);
+}
+
+function getQuestionsForFramework(framework) {
+  return frameworkMapping[framework] || [];
+}
+
+function getQuestionsForFrameworks(frameworks) {
+  const all = new Set();
+  frameworks.forEach(fw => {
+    (frameworkMapping[fw] || []).forEach(q => all.add(q));
+  });
+  return Array.from(all);
+}
+
+// Make available globally
+window.frameworkMapping = frameworkMapping;
+window.docFrameworkMap = docFrameworkMap;
+window.getFrameworks = getFrameworks;
+window.getQuestionsForFramework = getQuestionsForFramework;
+window.getQuestionsForFrameworks = getQuestionsForFrameworks;
