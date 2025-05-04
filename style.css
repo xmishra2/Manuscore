@@ -1,245 +1,187 @@
-/* app.js – core logic for Manuscore */
-
-// DOM refs
-const loginSection         = document.getElementById("loginSection");
-const mainNav              = document.getElementById("mainNav");
-const logoutBtn            = document.getElementById("logoutBtn");
-const tabs                 = document.querySelectorAll(".tab-content");
-const loginForm            = document.getElementById("loginForm");
-const evaluationForm       = document.getElementById("evaluationForm");
-const questionContainer    = document.getElementById("questionContainer");
-const manuscriptTypeSelect = document.getElementById("manuscriptType");
-const evalModeSelect       = document.getElementById("evalMode");
-const recordList           = document.getElementById("recordList");
-
-// Build question lookup map
-const questionMap = {};
-questions.forEach(q => { questionMap[q.id] = q.text; });
-
-// Document type → frameworks mapping (for auto mode)
-const docFrameworkMap = {
-  "Article":           ["CASP","STROBE","EQUATOR"],
-  "Review":            ["PRISMA","ROBIS","GRADE"],
-  "Conference Paper":  ["MMAT","CASP"],
-  "Case Report":       ["CARE","COPE"],
-  "Qualitative Study": ["SRQR","CASP"],
-  "Editorial Material": ["COPE"],
-  "Letter":            ["COPE","EQUATOR"],
-  "Short Survey":      ["SCITE","ALTMETRICS"],
-  "Data Paper":        ["SEMANTIC","EQUATOR"],
-  "Software Review":   ["SEMANTIC","EQUATOR"],
-  "Book Review":       ["SCITE","ALTMETRICS"],
-  "Guideline":         ["GRADE","COPE"],
-  "Meeting Abstract":  ["COPE"]
-};
-
-// Show/hide app vs login
-function showApp() {
-  loginSection.style.display = "none";
-  mainNav.style.display     = "flex";
-  logoutBtn.style.display   = "inline-block";
-}
-function hideApp() {
-  loginSection.style.display = "block";
-  mainNav.style.display     = "none";
-  logoutBtn.style.display   = "none";
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f4f6f8;
+  color: #333;
 }
 
-// Update navbar active button
-function updateNavActive(tabId) {
-  document.querySelectorAll('#mainNav button[data-tab]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === tabId);
-  });
+header {
+  background-color: #2c3e50;
+  color: white;
+  padding: 1.5em;
+  text-align: center;
 }
 
-// Switch tab and render if needed
-function switchTab(tabId) {
-  tabs.forEach(sec => sec.classList.toggle('active', sec.id === tabId));
-  updateNavActive(tabId);
-  if (tabId === 'evaluate') {
-    renderQuestions();
-  } else {
-    questionContainer.innerHTML = '';
-  }
-}
-window.switchTab = switchTab;
-
-// Login handler
-loginForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const u = document.getElementById('username').value.trim();
-  const p = document.getElementById('password').value;
-  if (u && p) {
-    localStorage.setItem('manuscoreUser', u);
-    showApp();
-    switchTab('home');
-  } else {
-    alert('Please enter valid credentials.');
-  }
-});
-
-// Logout handler
-logoutBtn.addEventListener('click', () => {
-  if (confirm('Are you sure you want to log out?')) {
-    localStorage.removeItem('manuscoreUser');
-    hideApp();
-    switchTab(null);
-  }
-});
-
-// On load, set initial UI
-document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('manuscoreUser')) {
-    showApp();
-  }
-  switchTab('home');
-  updateRecordList();
-  // Nav buttons
-  document.querySelectorAll('#mainNav button[data-tab]').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
-  // Hook up evaluation UI
-  manuscriptTypeSelect.addEventListener('change', () => {
-    if (document.getElementById('evaluate').classList.contains('active')) renderQuestions();
-  });
-  evalModeSelect.addEventListener('change', () => {
-    if (document.getElementById('evaluate').classList.contains('active')) renderQuestions();
-  });
-  evaluationForm.addEventListener('submit', handleSubmit);
-  // Utilities
-  document.getElementById('copyCitationBtn').addEventListener('click', copyCitation);
-  document.getElementById('downloadBibtexBtn').addEventListener('click', downloadBibtex);
-  document.getElementById('exportCsvBtn').addEventListener('click', downloadAllCSV);
-});
-
-// Render evaluation questions
-function renderQuestions() {
-  const mode = evalModeSelect.value;
-  const type = manuscriptTypeSelect.value;
-  let frameworks = [];
-  if (mode === 'full') {
-    frameworks = Object.keys(frameworkMapping);
-  } else if (mode === 'auto') {
-    if (!type) {
-      questionContainer.innerHTML = '<p>Please select a document type first.</p>';
-      return;
-    }
-    frameworks = docFrameworkMap[type] || [];
-  }
-  const qids = [...new Set(frameworks.flatMap(fw => frameworkMapping[fw] || []))];
-  if (!qids.length) {
-    questionContainer.innerHTML = '<p>No questions available for the selected criteria.</p>';
-    return;
-  }
-  questionContainer.innerHTML = qids.map(id => {
-    const text = questionMap[id] || '[Missing question text]';
-    return `
-      <div class="question-item">
-        <label for="${id}">${text}</label>
-        <select id="${id}" required>
-          <option value="">–</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-      </div>
-    `;
-  }).join('');
+h1 {
+  margin: 0.2em 0;
 }
 
-// Handle form submission
-function handleSubmit(e) {
-  e.preventDefault();
-  if (!localStorage.getItem('manuscoreUser')) {
-    alert('Session expired. Please log in again.');
-    return;
-  }
-  const mode = evalModeSelect.value;
-  const type = manuscriptTypeSelect.value;
-  if (mode === 'auto' && !type) {
-    alert('Please select a document type.');
-    return;
-  }
-  const answers = {};
-  questionContainer.querySelectorAll('select').forEach(sel => {
-    const v = parseInt(sel.value, 10);
-    if (!isNaN(v)) answers[sel.id] = v;
-  });
-  if (!Object.keys(answers).length) {
-    alert('Please answer at least one question.');
-    return;
-  }
-  const selected = mode === 'full' ? Object.keys(frameworkMapping) : (docFrameworkMap[type] || []);
-  const frameworkScores = {};
-  selected.forEach(fw => {
-    const vals = (frameworkMapping[fw] || []).map(id => answers[id]).filter(v => v != null);
-    if (vals.length) {
-      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-      frameworkScores[fw] = Math.round(avg * 100) / 100;
-    }
-  });
-  const record = {
-    id: Date.now(),
-    paperTitle: document.getElementById('paperTitle').value.trim(),
-    doi: document.getElementById('paperDOI').value.trim(),
-    notes: document.getElementById('evaluatorNotes').value.trim(),
-    mode, documentType: type, answers, frameworkScores,
-    timestamp: new Date().toISOString()
-  };
-  const all = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
-  all.push(record);
-  localStorage.setItem('manuscoreRecords', JSON.stringify(all));
-  alert(`Saved. Manuscript ID: ${record.id}`);
-  updateRecordList();
-  switchTab('records');
+h2 {
+  color: #2c3e50;
+  margin-top: 0;
 }
 
-// Update record list
-function updateRecordList() {
-  const data = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
-  recordList.innerHTML = data.length
-    ? data.map((r, i) => `
-        <li>
-          <strong>#${i+1}</strong>: ${r.paperTitle} (${r.documentType}) <em>[${new Date(r.timestamp).toLocaleDateString()}]</em>
-          <button onclick="deleteRecord(${i})">Delete</button>
-        </li>
-      `).join('')
-    : '<li>No records found.</li>';
+nav {
+  display: flex;
+  justify-content: center;
+  background-color: #3498db;
+  padding: 0.5em;
+  position: relative;
 }
 
-// Delete record
-function deleteRecord(idx) {
-  const all = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
-  if (!confirm(`Delete manuscript #${idx+1}?`)) return;
-  all.splice(idx, 1);
-  localStorage.setItem('manuscoreRecords', JSON.stringify(all));
-  updateRecordList();
-}
-window.deleteRecord = deleteRecord;
-
-// Export CSV
-function downloadAllCSV() {
-  const data = JSON.parse(localStorage.getItem('manuscoreRecords') || '[]');
-  if (!data.length) return alert('No records to export.');
-  const keys = Object.keys(data[0]);
-  const csv = [keys.join(','), ...data.map(o => keys.map(k => typeof o[k] === 'object' ? JSON.stringify(o[k]) : o[k]).join(','))].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'manuscore_records.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+nav button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1em;
+  margin: 0 1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-// Citation utilities
-function copyCitation() {
-  const text = "Mishra, P. K. & Trenz, O. (2025). Manuscore: A Multi-framework Research Paper Evaluation Tool. Faculty of Business and Economics, Mendel University in Brno.";
-  navigator.clipboard.writeText(text).then(() => alert('Citation copied!'));
+nav button:hover,
+nav button.active {
+  font-weight: bold;
+  border-bottom: 2px solid white;
 }
 
-// BibTeX download
-function downloadBibtex() {
-  const bib = `@misc{manuscore2025,\n  author = {Mishra, Pawan Kumar and Trenz, Oldřich},\n  title = {Manuscore: A Multi-framework Research Paper Evaluation Tool},\n  year = {2025},\n  institution = {Faculty of Business and Economics, Mendel University in Brno},\n  note = {Available at https://manuscore.netlify.app}\n}`;
-  const blob = new Blob([bib], { type: 'text/plain' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'manuscore.bib'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+#logoutBtn {
+  position: absolute;
+  right: 1em;
+  top: 0.5em;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.4em 0.8em;
+  border-radius: 4px;
+  cursor: pointer;
+  display: none;
+}
+
+section.tab-content {
+  display: none;
+  padding: 2em;
+}
+
+section.tab-content.active {
+  display: block;
+}
+
+form {
+  background: white;
+  padding: 1.5em;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 1em auto;
+}
+
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.6em;
+  margin: 0.5em 0 1em;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+button[type="submit"],
+button {
+  background-color: #2980b9;
+  color: white;
+  border: none;
+  padding: 0.7em 1.5em;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  margin-top: 1em;
+}
+
+button:hover {
+  background-color: #2471a3;
+}
+
+ul#recordList {
+  max-width: 600px;
+  margin: 1em auto;
+  padding: 1em;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  list-style: none;
+}
+
+ul#recordList li {
+  padding: 0.4em 0;
+  border-bottom: 1px solid #eee;
+}
+
+ul#recordList li:last-child {
+  border-bottom: none;
+}
+
+/* Citation styles */
+.citation-box {
+  background: white;
+  border-left: 4px solid #3498db;
+  padding: 1em;
+  margin: 1em auto;
+  max-width: 600px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.citation-actions {
+  margin-top: 0.5em;
+}
+
+.citation-actions button {
+  margin-right: 0.5em;
+}
+
+/* Question styles */
+.question-item {
+  margin-bottom: 1em;
+}
+
+.question-item label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.3em;
+}
+
+/* Utility button overrides */
+#copyCitationBtn,
+#downloadBibtexBtn,
+#exportCsvBtn {
+  background-color: #3498db;
+}
+
+#copyCitationBtn:hover,
+#downloadBibtexBtn:hover,
+#exportCsvBtn:hover {
+  background-color: #2980b9;
+}
+
+/* Home overview panel */
+.overview {
+  max-width: 800px;
+  margin: 2em auto;
+  background: white;
+  padding: 1.5em;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.overview h3 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.overview p {
+  line-height: 1.5;
 }
