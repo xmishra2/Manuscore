@@ -1,4 +1,4 @@
-// Framework definitions (unchanged)
+// Framework definitions
 const frameworkMapping = {
   CONSORT: ["q1", "q2", "q4", "q5", "q7", "q14", "q17", "q18"],
   PRISMA: ["q1", "q21", "q22", "q23", "q25", "q24"],
@@ -16,6 +16,23 @@ const frameworkMapping = {
   ALTMETRICS: ["q31", "q40"],
   SEMANTIC: ["q10", "q32", "q36"]
 };
+
+// Auto-login if user exists
+window.onload = function () {
+  const logged = localStorage.getItem("manuscoreUser");
+  if (logged) {
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("mainNav").style.display = "flex";
+    document.getElementById("home").classList.add("active");
+  }
+  updateRecordList();
+};
+
+// Logout function
+function logout() {
+  localStorage.removeItem("manuscoreUser");
+  location.reload();
+}
 
 document.getElementById("evaluationForm").addEventListener("submit", function (e) {
   e.preventDefault();
@@ -67,7 +84,6 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
     }
   }
 
-  // Prepare payload
   const payload = {
     id: Date.now(),
     paperTitle: document.getElementById("paperTitle").value.trim(),
@@ -80,7 +96,6 @@ document.getElementById("evaluationForm").addEventListener("submit", function (e
     timestamp: new Date().toISOString()
   };
 
-  // Save to localStorage
   const all = JSON.parse(localStorage.getItem("manuscoreRecords") || "[]");
   all.push(payload);
   localStorage.setItem("manuscoreRecords", JSON.stringify(all));
@@ -108,7 +123,7 @@ function downloadAllCSV() {
   data.forEach(obj => {
     rows.push(keys.map(k => typeof obj[k] === "object" ? JSON.stringify(obj[k]) : obj[k]));
   });
-  const csv = rows.map(r => r.join(",")).join("\n");
+  const csv = rows.map(r => r.join(",")).join("\\n");
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -118,5 +133,3 @@ function downloadAllCSV() {
   a.click();
   document.body.removeChild(a);
 }
-
-window.onload = updateRecordList;
