@@ -13,33 +13,24 @@
       <button type="button" data-tab="home">Home</button>
       <button type="button" data-tab="evaluate">Evaluate</button>
       <button type="button" data-tab="records">Records</button>
-      <button id="logoutBtn" type="button" style="display: none;">Logout</button>
+      <button type="button" data-tab="manual">Help</button>
+      <button id="logoutBtn" type="button">Logout</button>
     </nav>
   </header>
 
-  <section id="loginSection">
+  <!-- LOGIN -->
+  <section id="loginSection" class="tab-content">
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required autocomplete="username" />
+      <input type="text"    id="username" placeholder="Username" required autocomplete="username" />
       <input type="password" id="password" placeholder="Password" required autocomplete="current-password" />
       <button type="submit">Login</button>
     </form>
   </section>
 
-  <section id="home" class="tab-content active">
-    <h2>Welcome to Manuscore</h2>
-    <p>This tool helps evaluate research manuscripts using multiple frameworks.</p>
-    <div class="citation-box">
-      <strong>Cite as:</strong> Mishra, P. K. & Trenz, O. (2025). <em>Manuscore: A Multi-framework Research Paper Evaluation Tool</em>. Faculty of Business and Economics, Mendel University in Brno.
-      <div class="citation-actions">
-        <button type="button" id="copyCitationBtn">📋 Copy</button>
-        <button type="button" id="downloadBibtexBtn">⬇️ BibTeX</button>
-      </div>
-    </div>
-    <p>  <!-- Home with overview -->
+  <!-- HOME -->
   <section id="home" class="tab-content">
     <h2>Welcome to Manuscore</h2>
-
     <div class="overview">
       <h3>About Manuscore</h3>
       <p>Manuscore is a web-based application crafted to streamline the evaluation of research manuscripts by integrating multiple established reporting frameworks into one cohesive tool. Whether you’re conducting randomized controlled trials, systematic reviews, observational studies, or qualitative research, Manuscore adapts dynamically to your manuscript type and chosen frameworks.</p>
@@ -65,14 +56,13 @@
       </div>
     </div>
   </section>
-</p>
-  </section>
 
+  <!-- EVALUATE -->
   <section id="evaluate" class="tab-content">
     <h2>Evaluate Manuscript</h2>
     <form id="evaluationForm">
       <input id="paperTitle" type="text" placeholder="Paper Title" required />
-      <input id="paperDOI" type="text" placeholder="DOI or Link" />
+      <input id="paperDOI"   type="text" placeholder="DOI or Link" />
       <select id="evalMode">
         <option value="auto">Auto (based on type)</option>
         <option value="full">Full Frameworks</option>
@@ -99,10 +89,21 @@
     </form>
   </section>
 
+  <!-- RECORDS -->
   <section id="records" class="tab-content">
     <h2>Saved Evaluations</h2>
     <ul id="recordList"></ul>
     <button type="button" id="exportCsvBtn">Export All to CSV</button>
+  </section>
+
+  <!-- HELP/MANUAL -->
+  <section id="manual" class="tab-content">
+    <h2>User Manual</h2>
+    <div class="manual-content">
+      <h3>Introduction</h3>
+      <p>Manuscore is a versatile web application designed to streamline the peer-review process by integrating multiple reporting checklists (e.g., CONSORT, PRISMA, STROBE) into a unified evaluation tool...</p>
+      <!-- Paste full manual content here -->
+    </div>
   </section>
 
   <script src="framework.js"></script>
